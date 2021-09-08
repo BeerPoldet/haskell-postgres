@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data/pgdata
+    environment:
+      POSTGRES_PASSWORD: reallysecret
+      POSTGRES_USER: postgres
+      POSTGRES_DB: movie_store
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+volumes:
+  db_data:
