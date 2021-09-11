@@ -7,36 +7,45 @@
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeOperators              #-}
 
-module App 
+module App
   ( start
   )
   where
 
-import           Control.Monad.IO.Class     (liftIO, MonadIO)
-import           Control.Monad.Reader       (ReaderT, runReaderT, withReaderT)
-import           Control.Monad.Except       (ExceptT (ExceptT), lift)
-import           Data.Pool                  (Pool, createPool, withResource)
+import           App.API                           (API, api)
+import           App.Config                        (Config, PostgresConfig (..),
+                                                    PostgresConnectConfig (..),
+                                                    PostgresPoolConfig (..),
+                                                    config, configPostgres,
+                                                    configWarp)
+import           App.Error                         (catchException,
+                                                    onExceptionResponse)
+import           Control.Exception                 (SomeException)
+import           Control.Monad.Catch               (MonadCatch, catch)
+import           Control.Monad.Except              (ExceptT (ExceptT), lift)
+import           Control.Monad.IO.Class            (MonadIO, liftIO)
+import           Control.Monad.Reader              (ReaderT, runReaderT,
+                                                    withReaderT)
+import           DB                                (createConnection)
+import           DB.Migration                      (migrate)
+import           DB.ResultError                    ()
+import           Data.Pool                         (Pool, createPool,
+                                                    withResource)
 import           Data.Text
-import           Database.PostgreSQL.Simple (Connection, ResultError, close)
-import           DB                         (createConnection)
-import           GHC.Generics               (Generic)
-import           DB.Migration                  (migrate)
-import           Movie                      (Movie)
-import           Movie.Handler                      (unMovieHandler, MovieHandler)
-import           Movie.DB                      (queryMovies, createMovie)
-import           Network.Wai                (Application)
-import           Network.Wai.Handler.Warp   (runSettings)
-import           Network.Wai.Handler.Warp.Internal   (Settings (..))
-import           DB.ResultError ()
-import           Servant                    ((:<|>) (..))
-import           Servant.Server             (Handler (Handler), ServerT, hoistServer,
-                                             serve)
-import Data.Time.Clock (NominalDiffTime)
-import App.API (API, api)
-import App.Config (config, configWarp, configPostgres, PostgresConfig(..), PostgresPoolConfig(..) , PostgresConnectConfig(..), Config)
-import App.Error (onExceptionResponse, catchException)
-import Control.Exception (SomeException)
-import Control.Monad.Catch (catch, MonadCatch)
+import           Data.Time.Clock                   (NominalDiffTime)
+import           Database.PostgreSQL.Simple        (Connection, ResultError,
+                                                    close)
+import           GHC.Generics                      (Generic)
+import           Movie                             (Movie)
+import           Movie.DB                          (createMovie, queryMovies)
+import           Movie.Handler                     (MovieHandler,
+                                                    unMovieHandler)
+import           Network.Wai                       (Application)
+import           Network.Wai.Handler.Warp          (runSettings)
+import           Network.Wai.Handler.Warp.Internal (Settings (..))
+import           Servant                           ((:<|>) (..))
+import           Servant.Server                    (Handler (Handler), ServerT,
+                                                    hoistServer, serve)
 
 data Env = Env
   { envConfig :: Config
@@ -53,9 +62,9 @@ newtype AppM m a
 server :: ServerT API (AppM Handler)
 server = fromMovieDB queryMovies
   :<|> fromMovieDB . createMovie
--- Handler = ExceptT ServerError IO, ExceptT is instance of MonadIO, 
+-- Handler = ExceptT ServerError IO, ExceptT is instance of MonadIO,
 -- which I implemented as Instance of MovieDBLive.
--- On top of that, I used withReaderT to turn ReaderT (Pool Connection, Int) 
+-- On top of that, I used withReaderT to turn ReaderT (Pool Connection, Int)
 -- to ReaderT (Pool Connection) that works with MovieDBLive.
 
 fromMovieDB :: MovieHandler m a -> AppM m a
@@ -69,19 +78,19 @@ app :: Env -> Application
 app env = serve api $ hoistServer api (fromAppM env) server
 
 instance AppServer IO where
-  mkConfig = 
-    App.Config.config 
+  mkConfig =
+    App.Config.config
     >>= \cfg -> putStrLn "Running application with config:"
     >> print cfg
     >> pure cfg
 
-  mkPool (PostgresConfig PostgresPoolConfig {..} postgresConnectConfig) = 
-    createPool 
+  mkPool (PostgresConfig PostgresPoolConfig {..} postgresConnectConfig) =
+    createPool
       (createConnection postgresConnectConfig)
-      close 
-      postgresPoolStrip
-      (fromInt postgresPoolKeepOpenTime) 
-      postgresPoolSize
+      close
+      postgresPoolConfigStrip
+      (fromInt postgresPoolConfigKeepOpenTime)
+      postgresPoolConfigSize
     where fromInt :: Int -> NominalDiffTime
           fromInt = fromInteger . fromIntegral
 
@@ -92,7 +101,7 @@ instance AppServer IO where
     runSettings (wrapSettings cfg) $ app appEnv
     where wrapSettings cfg
             = (configWarp cfg)
-            -- { settingsOnExceptionResponse = onExceptionResponse 
+            -- { settingsOnExceptionResponse = onExceptionResponse
             -- }
 
 class Monad m => AppServer m where

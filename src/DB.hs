@@ -9,9 +9,9 @@ import App.Config (PostgresConnectConfig (..))
 createConnection :: PostgresConnectConfig -> IO Connection
 createConnection PostgresConnectConfig {..} = connect
   $ ConnectInfo
-    { connectHost = postgresConnectHost
-    , connectPort = fromIntegral postgresConnectPort
-    , connectUser = postgresConnectUser
-    , connectPassword = postgresConnectPassword
-    , connectDatabase = postgresConnectDatabase
+    { connectHost = postgresConnectConfigHost
+    , connectPort = fromIntegral postgresConnectConfigPort
+    , connectUser = postgresConnectConfigUser
+    , connectPassword = postgresConnectConfigPassword
+    , connectDatabase = postgresConnectConfigDatabase
     }

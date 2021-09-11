@@ -1,5 +1,8 @@
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module App.Config where
 
@@ -10,13 +13,13 @@ import           GHC.Generics                      (Generic)
 import           Network.Wai.Handler.Warp.Internal (Settings (Settings, settingsHost, settingsPort))
 
 config :: IO Config
-config = 
-  Conferer.mkConfig "movi" 
+config =
+  Conferer.mkConfig "movi"
   >>= Conferer.fetch
 
 data Config
   = Config
-  { configWarp :: Settings
+  { configWarp     :: Settings
   , configPostgres :: PostgresConfig
   }
   deriving (Generic, Show)
@@ -39,50 +42,56 @@ instance Conferer.DefaultConfig Config where
 
 data PostgresConfig
   = PostgresConfig
-  { postgresPool :: PostgresPoolConfig
-  , postgresConnect :: PostgresConnectConfig
+  { postgresConfigPool    :: PostgresPoolConfig
+  , postgresConfigConnect :: PostgresConnectConfig
   }
   deriving (Generic, Show)
+
+instance Conferer.FromConfig PostgresConfig
 
 instance Conferer.DefaultConfig PostgresConfig where
   configDef
     = PostgresConfig
-    { postgresPool = Conferer.configDef
-    , postgresConnect = Conferer.configDef
+    { postgresConfigPool = Conferer.configDef
+    , postgresConfigConnect = Conferer.configDef
     }
 
 data PostgresPoolConfig
   = PostgresPoolConfig
-  { postgresPoolSize :: Int
-  , postgresPoolStrip :: Int
-  , postgresPoolKeepOpenTime :: Int
+  { postgresPoolConfigSize         :: Int
+  , postgresPoolConfigStrip        :: Int
+  , postgresPoolConfigKeepOpenTime :: Int
   }
   deriving (Generic, Show)
 
 instance Conferer.DefaultConfig PostgresPoolConfig where
   configDef
     = PostgresPoolConfig
-    { postgresPoolSize = 10
-    , postgresPoolStrip = 1
-    , postgresPoolKeepOpenTime = 10
+    { postgresPoolConfigSize = 10
+    , postgresPoolConfigStrip = 1
+    , postgresPoolConfigKeepOpenTime = 10
     }
+
+instance Conferer.FromConfig PostgresPoolConfig
 
 data PostgresConnectConfig
   = PostgresConnectConfig
-  { postgresConnectHost :: String
-  , postgresConnectPort :: Int
-  , postgresConnectUser :: String
-  , postgresConnectPassword :: String
-  , postgresConnectDatabase :: String
+  { postgresConnectConfigHost     :: String
+  , postgresConnectConfigPort     :: Int
+  , postgresConnectConfigUser     :: String
+  , postgresConnectConfigPassword :: String
+  , postgresConnectConfigDatabase :: String
   }
   deriving (Generic, Show)
+
+instance Conferer.FromConfig PostgresConnectConfig
 
 instance Conferer.DefaultConfig PostgresConnectConfig where
   configDef
     = PostgresConnectConfig
-    { postgresConnectHost = "localhost"
-    , postgresConnectPort = 5432
-    , postgresConnectUser = "postgres"
-    , postgresConnectPassword = "reallysecret"
-    , postgresConnectDatabase = "movie_store"
+    { postgresConnectConfigHost = "localhost"
+    , postgresConnectConfigPort = 5432
+    , postgresConnectConfigUser = "postgres"
+    , postgresConnectConfigPassword = "reallysecret"
+    , postgresConnectConfigDatabase = "movie_store"
     }
