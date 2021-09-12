@@ -1,20 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes       #-}
 
-module DB.Migration 
+module DB.Migration
   (migrate)
   where
 
 import           Control.Monad                        (void)
-import           Database.PostgreSQL.Simple           (ConnectInfo (..),
-                                                       connect,
-                                                       defaultConnectInfo,
-                                                       withTransaction, Connection)
-import Database.PostgreSQL.Simple.Types (fromQuery)
-import Database.PostgreSQL.Simple.SqlQQ (sql)
+import           Database.PostgreSQL.Simple           (Connection,
+                                                       withTransaction)
 import           Database.PostgreSQL.Simple.Migration (MigrationCommand (MigrationCommands, MigrationInitialization, MigrationScript),
                                                        MigrationContext (MigrationContext),
                                                        runMigration)
+import           Database.PostgreSQL.Simple.SqlQQ     (sql)
+import           Database.PostgreSQL.Simple.Types     (fromQuery)
 
 migrate :: Connection -> IO ()
 migrate connection =
@@ -30,9 +28,9 @@ migrate connection =
           ]
 
 createMovieTable :: MigrationCommand
-createMovieTable = MigrationScript 
+createMovieTable = MigrationScript
   "create movie table"
-  $ fromQuery 
+  $ fromQuery
   [sql|
     create table movies(
       id int primary key not null,
@@ -42,9 +40,9 @@ createMovieTable = MigrationScript
   |]
 
 addCreatedAtOnMovieTable :: MigrationCommand
-addCreatedAtOnMovieTable = MigrationScript 
+addCreatedAtOnMovieTable = MigrationScript
   "add created_at on movie table"
-  $ fromQuery 
+  $ fromQuery
   [sql|
     alter table movies
       add column created_at timestamp without time zone not null default (now() at time zone 'utc')

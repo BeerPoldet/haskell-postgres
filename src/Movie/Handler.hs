@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE InstanceSigs               #-}
 {-# LANGUAGE OverloadedStrings          #-}
@@ -6,32 +7,17 @@
 
 module Movie.Handler where
 
-import           Control.Monad.IO.Class     (MonadIO, liftIO)
-import           Control.Monad.Reader       (MonadReader, ReaderT, ask)
-import           Data.Pool                  (Pool, withResource)
-import           Database.PostgreSQL.Simple (Connection)
 import           Movie                      (CreateMovie, Movie)
-import           Movie.DB                   (MovieDB (..), createMovie',
-                                             queryMovies')
 
-newtype MovieHandler m a
-  = MovieDBLive
-  { unMovieHandler :: ReaderT (Pool Connection) m a
-  }
-  deriving ( Functor
-           , Applicative
-           , Monad
-           , MonadReader (Pool Connection)
-           , MonadIO
-           )
+listMovies :: (MonadMovieListDB m) => m [Movie]
+listMovies = do
+  _listMovies
 
-instance MonadIO m => MovieDB (MovieHandler m) where
-  queryMovies :: MovieHandler m [Movie]
-  queryMovies = do
-    pool <- ask
-    liftIO $ withResource pool queryMovies'
+class Monad m => MonadMovieListDB m where
+  _listMovies :: m [Movie]
 
-  createMovie :: CreateMovie -> MovieHandler m Movie
-  createMovie movie = do
-    pool <- ask
-    liftIO $ withResource pool $ createMovie' movie
+createMovie :: (MonadCreateMovieDB m) => CreateMovie -> m Movie
+createMovie = _createMovie
+
+class Monad m => MonadCreateMovieDB m where
+  _createMovie :: CreateMovie -> m Movie

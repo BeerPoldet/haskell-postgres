@@ -1,13 +1,17 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE OverloadedStrings                  #-}
-{-# LANGUAGE TypeOperators                  #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
 module App.API where
 
-import           Movie   (Movie, CreateMovie)
-import           Servant ((:>), (:<|>) (..), Get, JSON, PostCreated, Proxy (Proxy), ReqBody)
+import           Movie       (CreateMovie, Movie)
+import           Servant     (Get, JSON, PostCreated, Proxy (Proxy), ReqBody,
+                              (:<|>) (..), (:>))
+import           Servant.API (NoContent)
 
-type API = "movies" 
+type API
+  = Get '[JSON] NoContent
+  :<|> "movies"
   :> ( Get '[JSON] [Movie]
      :<|> ReqBody '[JSON] CreateMovie :> PostCreated '[JSON] Movie
      )

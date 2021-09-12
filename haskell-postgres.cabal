@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3c3987bab7f235b296d488bd040ca155de7d0565e59a0607a5c5eee28f4b79e1
+-- hash: 9c3001fd2ce9c6466cf592c85532180a79314af00d0f7429546124c01ed7eb83
 
 name:           haskell-postgres
 version:        0.1.0.0
@@ -30,13 +30,19 @@ library
       App
       App.API
       App.Config
+      App.Env
       App.Error
+      App.Monad.AppM
+      App.Monad.Movie
+      App.Server
       DB
       DB.Migration
       DB.ResultError
       Movie
       Movie.DB
+      Movie.Effect
       Movie.Handler
+      Movie.List
   other-modules:
       Paths_haskell_postgres
   hs-source-dirs:
